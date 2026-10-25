@@ -3,8 +3,8 @@
 class Emit < Formula
   desc "Scheme compiler with a JIT REPL and standalone native executables"
   homepage "https://github.com/bwbensonjr/emit"
-  url "https://github.com/bwbensonjr/emit/releases/download/v0.2.1/emit-0.2.1.tar.gz"
-  sha256 "d632e311823b8471ec31f58fbec3b46f5fad00b108a167adabc93c4584ce35e5"
+  url "https://github.com/bwbensonjr/emit/releases/download/v0.3.0/emit-0.3.0.tar.gz"
+  sha256 "0ba6acc8d0abc82ae3ffa532af3a342aadbf7491f37ab8e41f4a08ec9227ce6c"
   license "MIT"
 
   depends_on arch: :arm64
@@ -28,17 +28,11 @@ class Emit < Formula
       GC_DYLIB=#{gc.opt_lib}/libgc.dylib
     ]
     system "make", *args
-    system "make", "install", "TOOLCHAIN_PIN=1", "WARM_STDLIB=0", *args
+    # Installing also prepares share/emit/library-cache: the standard libraries compiled by
+    # the installed binary, read by every user before their own cache.  It is built here, in
+    # the keg, because a post-install step runs sandboxed with a temporary HOME.
+    system "make", "install", "TOOLCHAIN_PIN=1", *args
     doc.install "vendor/unicode/17.0.0/LICENSE.txt" => "UNICODE-LICENSE.txt"
-  end
-
-  # Homebrew runs post-install work in its sandbox with a temporary HOME, so it cannot reach
-  # the user's cache; the user prepares it, or the first command fills it.
-  def caveats
-    <<~EOS
-      To precompile the standard libraries so the first command starts faster, run:
-        emit build --stdlib
-    EOS
   end
 
   test do
@@ -46,7 +40,10 @@ class Emit < Formula
     # overrides of the installed toolchain pin; test what a user gets by default.
     %w[CC CXX LLVM_CONFIG EMIT_LLVM_BIN GC_INC GC_LIB GC_DYLIB].each { |name| ENV.delete(name) }
     assert_match "emit #{version} (LLVM 22.", shell_output("#{bin}/emit --version")
-    assert_match "toolchain: package", shell_output("#{bin}/emit doctor")
+    doctor = shell_output("#{bin}/emit doctor")
+    assert_match "toolchain: package", doctor
+    # A step after install that rewrote the binary would leave every shared entry stale.
+    assert_match(/^shared cache: .* entries, matches this executable\]$/, doctor)
     (testpath/"answer.scm").write <<~SCHEME
       (import (scheme base) (scheme inexact) (scheme write))
       (display (exact (round (* (sqrt 4.0) 21))))
