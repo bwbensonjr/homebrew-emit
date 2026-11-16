@@ -58,3 +58,20 @@ jobs:
         with:
           name: bottles_${{ matrix.os }}
           path: '*.bottle.*'
+
+  # One stable check for the main ruleset to require. A matrix leg's check name changes with the
+  # matrix, and a skipped or cancelled leg would otherwise leave nothing failing. The Emit
+  # release automation requests auto-merge of a generated formula PR only behind this check.
+  required:
+    name: Required tap checks
+    if: always()
+    needs: [test-bot]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require every test-bot leg to succeed
+        env:
+          RESULT: ${{ needs.test-bot.result }}
+        run: |
+          echo "test-bot result: $RESULT"
+          test "$RESULT" = success
