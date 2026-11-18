@@ -3,8 +3,8 @@
 class Emit < Formula
   desc "Scheme compiler with a JIT REPL and standalone native executables"
   homepage "https://github.com/bwbensonjr/emit"
-  url "https://github.com/bwbensonjr/emit/releases/download/v0.8.0/emit-0.8.0.tar.gz"
-  sha256 "03d7e484fc455c9a712e7297f3746a046541d4240e9b6b0e5d31b07748bd9968"
+  url "https://github.com/bwbensonjr/emit/releases/download/v0.9.0/emit-0.9.0.tar.gz"
+  sha256 "7d1f538403d5abc9de464ced96a3040ca91aa352d1d121f84d5209e767824b98"
   license "MIT"
 
   depends_on arch: :arm64
